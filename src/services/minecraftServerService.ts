@@ -38,6 +38,26 @@ export const checkMinecraftServerStatus = async (
     const data = await response.json();
 
     if (data.online) {
+      // Detección especial de Aternos: cuando el servidor está apagado, el proxy de Aternos
+      // responde con "This server is offline" o protocol: -1
+      const motdText = (data.motd?.clean || '').toLowerCase();
+      const versionName = (data.version?.name_clean || '').toLowerCase();
+      const isAternosOffline =
+        motdText.includes('offline') ||
+        versionName.includes('crashed') ||
+        data.version?.protocol === -1;
+
+      if (isAternosOffline) {
+        return {
+          online: false,
+          playersOnline: 0,
+          playersMax: data.players?.max || 15,
+          version: 'Apagado en Aternos',
+          motd: 'El servidor está apagado actualmente.',
+          loading: false,
+        };
+      }
+
       return {
         online: true,
         playersOnline: data.players?.online || 0,
