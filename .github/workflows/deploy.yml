@@ -33,9 +33,10 @@ jobs:
       - name: Build Project
         run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_MC_SERVER_IP: ${{ secrets.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://pozuejurachepdhpyygg.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_k_UHW6C0BipbTIFWWUSa5Q_cfSa6Zvh' }}
+          VITE_MC_SERVER_IP: ${{ secrets.VITE_MC_SERVER_IP || 'AleeBonett.aternos.me' }}
+          VITE_MC_SERVER_VERSION: "1.21.4 Survival"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
