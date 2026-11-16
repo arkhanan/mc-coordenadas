@@ -77,6 +77,14 @@ export interface CoordinateReport {
   revisor?: UserProfile;
 }
 
+export interface ProjectMaterial {
+  id: string;
+  nombre: string;
+  cantidad_requerida: number;
+  cantidad_reunida: number;
+  unidad?: string; // 'bloques', 'stacks', 'cofres'
+}
+
 export interface Project {
   id: string;
   nombre: string;
@@ -85,6 +93,9 @@ export interface Project {
   responsable_id: string;
   ubicacion: string;
   estado: ProjectStatus;
+  video_url?: string | null;
+  schematic_url?: string | null;
+  materiales?: ProjectMaterial[];
   motivo_rechazo?: string | null;
   aprobado_por?: string | null;
   fecha_creacion: string;

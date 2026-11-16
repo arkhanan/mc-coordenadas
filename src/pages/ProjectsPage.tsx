@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectService } from '../services/projectService';
-import { Project, ProjectStatus } from '../types';
+import { Project, ProjectStatus, ProjectMaterial } from '../types';
 import { StatusBadge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
 import {
@@ -14,6 +14,12 @@ import {
   MapPin,
   Trash2,
   AlertCircle,
+  Video,
+  Boxes,
+  FileCode,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 const STATUS_TABS: { label: string; value: ProjectStatus | 'todos' }[] = [
@@ -40,6 +46,14 @@ export const ProjectsPage: React.FC = () => {
   const [isRejecting, setIsRejecting] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
 
+  // Expansion of materials per project
+  const [expandedMaterials, setExpandedMaterials] = useState<Record<string, boolean>>({});
+
+  // Editing materials progress modal
+  const [editingMaterialsProject, setEditingMaterialsProject] = useState<Project | null>(null);
+  const [tempMaterials, setTempMaterials] = useState<ProjectMaterial[]>([]);
+  const [savingMaterials, setSavingMaterials] = useState(false);
+
   const loadProjects = async () => {
     try {
       setLoading(true);
@@ -55,6 +69,33 @@ export const ProjectsPage: React.FC = () => {
   useEffect(() => {
     loadProjects();
   }, []);
+
+  const toggleMaterials = (projectId: string) => {
+    setExpandedMaterials((prev) => ({
+      ...prev,
+      [projectId]: !prev[projectId],
+    }));
+  };
+
+  const handleOpenMaterialsModal = (project: Project) => {
+    setEditingMaterialsProject(project);
+    setTempMaterials(project.materiales ? JSON.parse(JSON.stringify(project.materiales)) : []);
+  };
+
+  const handleSaveMaterialsProgress = async () => {
+    if (!editingMaterialsProject) return;
+    try {
+      setSavingMaterials(true);
+      await projectService.updateMaterials(editingMaterialsProject.id, tempMaterials);
+      setEditingMaterialsProject(null);
+      await loadProjects();
+    } catch (err) {
+      console.error('Error updating materials progress:', err);
+      alert('Error al actualizar el progreso de materiales.');
+    } finally {
+      setSavingMaterials(false);
+    }
+  };
 
   // Filter logic
   const filteredProjects = projects.filter((p) => {
@@ -213,6 +254,19 @@ export const ProjectsPage: React.FC = () => {
           {filteredProjects.map((project) => {
             const isOwner = profile?.id === project.responsable_id;
             const canManage = isOwner || isMod;
+            const hasMaterials = project.materiales && project.materiales.length > 0;
+            const isExpanded = Boolean(expandedMaterials[project.id]);
+
+            // Calculate overall material percentage
+            let totalRequired = 0;
+            let totalGathered = 0;
+            if (hasMaterials) {
+              project.materiales!.forEach((m) => {
+                totalRequired += m.cantidad_requerida;
+                totalGathered += Math.min(m.cantidad_reunida, m.cantidad_requerida);
+              });
+            }
+            const overallProgress = totalRequired > 0 ? Math.round((totalGathered / totalRequired) * 100) : 0;
 
             return (
               <div
@@ -242,6 +296,100 @@ export const ProjectsPage: React.FC = () => {
                       {project.ubicacion}
                     </span>
                   </div>
+
+                  {/* Video & Schematic Links */}
+                  {(project.video_url || project.schematic_url) && (
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {project.video_url && (
+                        <a
+                          href={project.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-[11px] font-bold text-rose-300 transition-all"
+                        >
+                          <Video size={13} className="text-rose-400" />
+                          <span>Ver Tutorial (YouTube)</span>
+                          <ExternalLink size={10} className="opacity-70" />
+                        </a>
+                      )}
+                      {project.schematic_url && (
+                        <a
+                          href={project.schematic_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-[11px] font-bold text-purple-300 transition-all"
+                        >
+                          <FileCode size={13} className="text-purple-400" />
+                          <span>Descargar Schematic (.litematic)</span>
+                          <ExternalLink size={10} className="opacity-70" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Materials Checklist Section */}
+                  {hasMaterials && (
+                    <div className="mt-3.5 p-3 rounded-xl bg-discord-darkest/70 border border-discord-border/60 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <button
+                          type="button"
+                          onClick={() => toggleMaterials(project.id)}
+                          className="font-bold text-discord-text-normal hover:text-white flex items-center gap-1.5 transition-colors"
+                        >
+                          <Boxes size={14} className="text-cyan-400" />
+                          <span>Materiales ({project.materiales!.length})</span>
+                          <span className="text-[11px] font-mono text-cyan-300">
+                            ({overallProgress}%)
+                          </span>
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenMaterialsModal(project)}
+                            className="text-[11px] font-bold text-discord-blurple hover:underline"
+                          >
+                            Actualizar donaciones
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="w-full bg-discord-secondary rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-discord-blurple to-emerald-400 h-1.5 rounded-full transition-all"
+                          style={{ width: `${overallProgress}%` }}
+                        />
+                      </div>
+
+                      {/* Expandable list */}
+                      {isExpanded && (
+                        <div className="pt-2 space-y-1.5 border-t border-discord-border/40 max-h-48 overflow-y-auto pr-1">
+                          {project.materiales!.map((mat) => {
+                            const percent = mat.cantidad_requerida > 0
+                              ? Math.min(100, Math.round((mat.cantidad_reunida / mat.cantidad_requerida) * 100))
+                              : 0;
+                            const isDone = mat.cantidad_reunida >= mat.cantidad_requerida;
+
+                            return (
+                              <div
+                                key={mat.id}
+                                className="flex items-center justify-between text-[11px] p-1.5 rounded bg-discord-secondary/50 font-mono"
+                              >
+                                <span className={`truncate ${isDone ? 'line-through text-discord-text-muted' : 'text-discord-text-normal'}`}>
+                                  {mat.nombre}
+                                </span>
+                                <span className={`font-semibold ml-2 flex-shrink-0 ${isDone ? 'text-emerald-400' : 'text-amber-300'}`}>
+                                  {mat.cantidad_reunida} / {mat.cantidad_requerida} {mat.unidad || ''} ({percent}%)
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Rejection notice if state is 'rechazado' */}
                   {project.estado === 'rechazado' && project.motivo_rechazo && (
@@ -334,6 +482,73 @@ export const ProjectsPage: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL ACTUALIZAR PROGRESO DE MATERIALES */}
+      <Modal
+        isOpen={Boolean(editingMaterialsProject)}
+        onClose={() => setEditingMaterialsProject(null)}
+        title="Actualizar Donaciones y Materiales"
+        subtitle={editingMaterialsProject?.nombre}
+        maxWidth="lg"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setEditingMaterialsProject(null)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-discord-text-muted hover:text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveMaterialsProgress}
+              disabled={savingMaterials}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-discord-blurple hover:bg-discord-blurple-hover text-white shadow-md disabled:opacity-50 transition-all"
+            >
+              {savingMaterials ? 'Guardando...' : 'Guardar Progreso'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-discord-text-muted">
+            Ingresa la cantidad reunida o donada hasta el momento para cada material del proyecto.
+          </p>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+            {tempMaterials.map((mat, idx) => (
+              <div
+                key={mat.id}
+                className="p-3 rounded-xl bg-discord-secondary/70 border border-discord-border/60 flex items-center justify-between gap-3"
+              >
+                <div className="truncate flex-1">
+                  <span className="font-bold text-white text-xs block truncate">{mat.nombre}</span>
+                  <span className="text-[11px] text-discord-text-muted">
+                    Meta: {mat.cantidad_requerida} {mat.unidad || 'bloques'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs text-discord-text-muted font-mono">Reunido:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={mat.cantidad_reunida}
+                    onChange={(e) => {
+                      const val = Math.max(0, Number(e.target.value));
+                      const updated = [...tempMaterials];
+                      updated[idx] = { ...updated[idx], cantidad_reunida: val };
+                      setTempMaterials(updated);
+                    }}
+                    className="w-24 px-2.5 py-1.5 rounded-lg bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
+                  />
+                  <span className="text-xs text-discord-text-muted">{mat.unidad || ''}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
       {/* REVIEW MODAL */}
       <Modal
         isOpen={Boolean(reviewingProject)}
@@ -398,6 +613,23 @@ export const ProjectsPage: React.FC = () => {
               {reviewingProject?.ubicacion}
             </p>
           </div>
+
+          {reviewingProject?.video_url && (
+            <div>
+              <span className="text-[11px] font-bold text-discord-text-muted uppercase">
+                Video Tutorial:
+              </span>
+              <a
+                href={reviewingProject.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-rose-400 hover:underline flex items-center gap-1.5 mt-1"
+              >
+                <Video size={14} />
+                <span>{reviewingProject.video_url}</span>
+              </a>
+            </div>
+          )}
 
           {isRejecting && (
             <div className="space-y-2 pt-2 border-t border-discord-border/50">

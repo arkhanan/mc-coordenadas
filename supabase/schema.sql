@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS public.proyectos (
     )),
     responsable_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     ubicacion TEXT NOT NULL,
+    video_url TEXT,
+    schematic_url TEXT,
+    materiales JSONB DEFAULT '[]'::jsonb,
     estado TEXT NOT NULL DEFAULT 'propuesto' CHECK (estado IN (
         'propuesto', 'aprobado', 'en_construccion', 'finalizado', 'rechazado', 'cancelado'
     )),
