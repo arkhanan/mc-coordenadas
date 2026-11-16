@@ -7,6 +7,7 @@ interface CoordinateActionsProps {
   y: number;
   z: number;
   dimension: Dimension;
+  showTeleportCommand?: boolean;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export const CoordinateActions: React.FC<CoordinateActionsProps> = ({
   y,
   z,
   dimension,
+  showTeleportCommand = false,
   className = '',
 }) => {
   const [copiedCoords, setCopiedCoords] = useState(false);
@@ -72,7 +74,7 @@ export const CoordinateActions: React.FC<CoordinateActionsProps> = ({
           </div>
         </div>
 
-        {/* Botón principal: Copiar Coordenadas solas */}
+        {/* Botón: Copiar Coordenadas */}
         <button
           onClick={handleCopyRaw}
           title={`Copiar ${rawCoordinates} al portapapeles`}
@@ -96,28 +98,30 @@ export const CoordinateActions: React.FC<CoordinateActionsProps> = ({
         </button>
       </div>
 
-      {/* Botón secundario: Copiar comando /tp Minecraft */}
-      <button
-        onClick={handleCopyCommand}
-        title={`Copiar comando de teletransporte: ${teleportCommand}`}
-        className={`group relative flex items-center justify-between w-full px-3 py-1.5 bg-discord-secondary/70 hover:bg-discord-secondary border border-discord-border/50 hover:border-discord-blurple/50 rounded-lg text-[11px] font-mono text-discord-text-muted hover:text-white transition-all`}
-      >
-        <div className="flex items-center gap-1.5 truncate">
-          <Terminal size={13} className="text-discord-blurple flex-shrink-0" />
-          <span className="truncate">{teleportCommand}</span>
-        </div>
-        <div className="flex items-center gap-1 ml-2 flex-shrink-0 font-sans text-xs">
-          {copiedCmd ? (
-            <span className="flex items-center gap-1 text-emerald-400 font-bold">
-              <Check size={12} /> ¡Comando copiado!
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-discord-text-muted group-hover:text-white">
-              <Copy size={12} /> Copiar /tp
-            </span>
-          )}
-        </div>
-      </button>
+      {/* Botón de teletransporte /tp: Exclusivo para Staff (Moderadores y Administradores) */}
+      {showTeleportCommand && (
+        <button
+          onClick={handleCopyCommand}
+          title={`Comando Staff: ${teleportCommand}`}
+          className={`group relative flex items-center justify-between w-full px-3 py-1.5 bg-discord-secondary/70 hover:bg-discord-secondary border border-discord-border/50 hover:border-discord-blurple/50 rounded-lg text-[11px] font-mono text-discord-text-muted hover:text-white transition-all`}
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <Terminal size={13} className="text-discord-blurple flex-shrink-0" />
+            <span className="truncate">{teleportCommand}</span>
+          </div>
+          <div className="flex items-center gap-1 ml-2 flex-shrink-0 font-sans text-xs">
+            {copiedCmd ? (
+              <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                <Check size={12} /> ¡Comando copiado!
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-indigo-300 font-semibold group-hover:text-white">
+                <Copy size={12} /> Copiar /tp (Staff)
+              </span>
+            )}
+          </div>
+        </button>
+      )}
     </div>
   );
 };

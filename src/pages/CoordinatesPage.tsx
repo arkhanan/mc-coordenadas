@@ -320,13 +320,14 @@ export const CoordinatesPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Interactive Coordinate Actions: Copy Raw Coords & Copy /tp Command */}
+                  {/* Interactive Coordinate Actions: Copy Raw Coords & Staff /tp Command */}
                   <div className="mt-4">
                     <CoordinateActions
                       x={coord.x}
                       y={coord.y}
                       z={coord.z}
                       dimension={coord.dimension}
+                      showTeleportCommand={isMod}
                     />
                   </div>
                 </div>
