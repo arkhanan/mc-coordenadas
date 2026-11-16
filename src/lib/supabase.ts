@@ -9,6 +9,8 @@ export const isSupabaseConfigured = Boolean(
   supabaseAnonKey &&
   !supabaseUrl.includes('placeholder') &&
   !supabaseAnonKey.includes('placeholder') &&
+  !supabaseAnonKey.includes('PEGA_AQUI') &&
+  supabaseAnonKey.length > 30 &&
   supabaseUrl.startsWith('https://')
 );
 
