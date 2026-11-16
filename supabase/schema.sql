@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.proyectos (
     video_url TEXT,
     schematic_url TEXT,
     materiales JSONB DEFAULT '[]'::jsonb,
+    votos JSONB DEFAULT '[]'::jsonb,
     estado TEXT NOT NULL DEFAULT 'propuesto' CHECK (estado IN (
         'propuesto', 'aprobado', 'en_construccion', 'finalizado', 'rechazado', 'cancelado'
     )),

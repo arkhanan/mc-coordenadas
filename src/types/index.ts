@@ -96,6 +96,7 @@ export interface Project {
   video_url?: string | null;
   schematic_url?: string | null;
   materiales?: ProjectMaterial[];
+  votos?: string[]; // Array de IDs de usuarios que apoyaron el proyecto
   motivo_rechazo?: string | null;
   aprobado_por?: string | null;
   fecha_creacion: string;

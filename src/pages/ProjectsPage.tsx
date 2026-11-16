@@ -20,6 +20,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Flame,
 } from 'lucide-react';
 
 const STATUS_TABS: { label: string; value: ProjectStatus | 'todos' }[] = [
@@ -40,7 +41,24 @@ export const ProjectsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'todos'>('todos');
 
-  // Review Modal state (for quick review from project list)
+  const [sortByVotes, setSortByVotes] = useState(false);
+  const [votingProjectId, setVotingProjectId] = useState<string | null>(null);
+
+  const handleToggleVote = async (projectId: string) => {
+    if (!profile) {
+      alert('Debes iniciar sesión para votar por un proyecto.');
+      return;
+    }
+    try {
+      setVotingProjectId(projectId);
+      await projectService.toggleVote(projectId, profile.id);
+      await loadProjects();
+    } catch (err) {
+      console.error('Error toggling vote:', err);
+    } finally {
+      setVotingProjectId(null);
+    }
+  };
   const [reviewingProject, setReviewingProject] = useState<Project | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
@@ -129,6 +147,13 @@ export const ProjectsPage: React.FC = () => {
       (p.responsable?.username && p.responsable.username.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return matchesStatus && matchesSearch;
+  }).sort((a, b) => {
+    if (sortByVotes) {
+      const votesA = Array.isArray(a.votos) ? a.votos.length : 0;
+      const votesB = Array.isArray(b.votos) ? b.votos.length : 0;
+      return votesB - votesA;
+    }
+    return new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime();
   });
 
   // Handle Review
@@ -273,21 +298,36 @@ export const ProjectsPage: React.FC = () => {
           />
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-discord-border/40 scrollbar-none">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setSelectedStatus(tab.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                selectedStatus === tab.value
-                  ? 'bg-discord-blurple text-white font-bold shadow-sm'
-                  : 'bg-discord-secondary/70 text-discord-text-muted hover:text-white hover:bg-discord-hover'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Status Filter Tabs & Sort Toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-discord-border/40">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setSelectedStatus(tab.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  selectedStatus === tab.value
+                    ? 'bg-discord-blurple text-white font-bold shadow-sm'
+                    : 'bg-discord-secondary/70 text-discord-text-muted hover:text-white hover:bg-discord-hover'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSortByVotes(!sortByVotes)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all self-start sm:self-auto ${
+              sortByVotes
+                ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
+                : 'bg-discord-secondary/70 hover:bg-discord-hover text-discord-text-muted hover:text-white'
+            }`}
+          >
+            <Flame size={14} className={sortByVotes ? 'text-amber-400' : ''} />
+            <span>{sortByVotes ? 'Más votados primero' : 'Ordenar por votos'}</span>
+          </button>
         </div>
       </div>
 
@@ -342,7 +382,32 @@ export const ProjectsPage: React.FC = () => {
                     <span className="text-xs font-bold text-cyan-300 bg-cyan-950/50 border border-cyan-800/40 px-2.5 py-0.5 rounded-full">
                       {project.categoria}
                     </span>
-                    <StatusBadge status={project.estado} />
+                    <div className="flex items-center gap-2">
+                      {/* Votación / Apoyo con Diamante */}
+                      {(() => {
+                        const votes = Array.isArray(project.votos) ? project.votos : [];
+                        const hasVoted = profile ? votes.includes(profile.id) : false;
+                        const isVoting = votingProjectId === project.id;
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleVote(project.id)}
+                            disabled={isVoting}
+                            title={hasVoted ? 'Has apoyado este proyecto (clic para quitar voto)' : 'Apoyar este proyecto con un voto'}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all border ${
+                              hasVoted
+                                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm shadow-cyan-500/20'
+                                : 'bg-discord-secondary/80 border-discord-border/70 text-discord-text-muted hover:text-white hover:border-cyan-400/50'
+                            }`}
+                          >
+                            <span className="text-sm">💎</span>
+                            <span>{votes.length}</span>
+                          </button>
+                        );
+                      })()}
+                      <StatusBadge status={project.estado} />
+                    </div>
                   </div>
 
                   {/* Title & Description */}

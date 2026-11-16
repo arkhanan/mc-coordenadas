@@ -291,7 +291,13 @@ export const ModerationPage: React.FC = () => {
                       <span className="text-xs font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/40 px-2.5 py-0.5 rounded-full">
                         {project.categoria}
                       </span>
-                      <StatusBadge status="propuesto" />
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-950/60 border border-cyan-800/40 text-cyan-300" title="Votos de la comunidad">
+                          <span>💎</span>
+                          <span>{Array.isArray(project.votos) ? project.votos.length : 0}</span>
+                        </span>
+                        <StatusBadge status="propuesto" />
+                      </div>
                     </div>
 
                     <h3 className="text-base font-bold text-white">{project.nombre}</h3>

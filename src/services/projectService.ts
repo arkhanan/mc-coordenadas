@@ -88,6 +88,20 @@ export const projectService = {
     return this.update(id, { materiales });
   },
 
+  async toggleVote(projectId: string, userId: string): Promise<Project> {
+    const projects = await this.getAll();
+    const target = projects.find((p) => p.id === projectId);
+    if (!target) throw new Error('Proyecto no encontrado');
+
+    const currentVotes: string[] = Array.isArray(target.votos) ? target.votos : [];
+    const hasVoted = currentVotes.includes(userId);
+    const updatedVotes = hasVoted
+      ? currentVotes.filter((id) => id !== userId)
+      : [...currentVotes, userId];
+
+    return this.update(projectId, { votos: updatedVotes });
+  },
+
   async update(id: string, updates: Partial<Project>): Promise<Project> {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase
