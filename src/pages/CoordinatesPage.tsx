@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { coordinateService } from '../services/coordinateService';
 import { Coordinate, CoordinateCategory, Dimension } from '../types';
 import { DimensionBadge, StatusBadge } from '../components/common/Badge';
-import { CoordinateCopyButton } from '../components/common/CoordinateCopyButton';
+import { CoordinateActions } from '../components/common/CoordinateCopyButton';
 import { Modal } from '../components/common/Modal';
 import {
   MapPin,
@@ -320,14 +320,13 @@ export const CoordinatesPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Command Copy Pill */}
+                  {/* Interactive Coordinate Actions: Copy Raw Coords & Copy /tp Command */}
                   <div className="mt-4">
-                    <CoordinateCopyButton
+                    <CoordinateActions
                       x={coord.x}
                       y={coord.y}
                       z={coord.z}
                       dimension={coord.dimension}
-                      variant="command"
                     />
                   </div>
                 </div>
