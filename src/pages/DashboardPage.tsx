@@ -7,6 +7,7 @@ import { adminService } from '../services/adminService';
 import { Coordinate, Project, ServerStats } from '../types';
 import { DimensionBadge, StatusBadge } from '../components/common/Badge';
 import { CoordinateCopyButton } from '../components/common/CoordinateCopyButton';
+import { checkMinecraftServerStatus, MinecraftServerStatus } from '../services/minecraftServerService';
 import {
   MapPin,
   FolderGit2,
@@ -25,8 +26,11 @@ export const DashboardPage: React.FC = () => {
   const [recentCoords, setRecentCoords] = useState<Coordinate[]>([]);
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mcStatus, setMcStatus] = useState<MinecraftServerStatus | null>(null);
+  const serverIp = import.meta.env.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net';
 
   useEffect(() => {
+    checkMinecraftServerStatus(serverIp).then(setMcStatus);
     const loadDashboardData = async () => {
       try {
         setLoading(true);
@@ -100,26 +104,39 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-discord-darkest/80 border border-discord-border/70 rounded-xl p-4 min-w-[240px] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-discord-text-muted flex items-center gap-1.5">
-                <Server size={14} className="text-discord-green" />
+                <Server size={14} className={mcStatus?.online ? 'text-discord-green' : 'text-rose-400'} />
                 ESTADO SERVIDOR
               </span>
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                ONLINE
-              </span>
+              {mcStatus?.online ? (
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                  ONLINE
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-400 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  APAGADO
+                </span>
+              )}
             </div>
             <div className="space-y-1 font-mono text-xs text-discord-text-normal">
               <p className="flex justify-between">
-                <span className="text-discord-text-muted">Dificultad:</span>
-                <span className="text-white font-semibold">Difícil (Hard)</span>
+                <span className="text-discord-text-muted">Jugadores:</span>
+                <span className={`font-semibold ${mcStatus?.online ? 'text-emerald-400' : 'text-discord-text-muted'}`}>
+                  {mcStatus?.online ? `${mcStatus.playersOnline} / ${mcStatus.playersMax}` : '0 / 0'}
+                </span>
               </p>
               <p className="flex justify-between">
-                <span className="text-discord-text-muted">Whitelist:</span>
-                <span className="text-emerald-400 font-semibold">Activada</span>
+                <span className="text-discord-text-muted">Versión:</span>
+                <span className="text-white font-semibold truncate max-w-[120px]">
+                  {mcStatus?.version || '1.21.x'}
+                </span>
               </p>
               <p className="flex justify-between">
-                <span className="text-discord-text-muted">PvP:</span>
-                <span className="text-amber-400 font-semibold">En arenas</span>
+                <span className="text-discord-text-muted">Hosting:</span>
+                <span className="text-cyan-400 font-semibold">
+                  {serverIp.includes('aternos') ? 'Aternos' : 'Minecraft Server'}
+                </span>
               </p>
             </div>
           </div>

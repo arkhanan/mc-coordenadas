@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { RoleBadge } from '../common/Badge';
 import {
@@ -10,17 +10,29 @@ import {
   Users,
 } from 'lucide-react';
 import { INITIAL_PROFILES } from '../../lib/mockData';
+import { checkMinecraftServerStatus, MinecraftServerStatus } from '../../services/minecraftServerService';
 
 export const Navbar: React.FC = () => {
   const { profile, role, signOut, isSupabaseConnected, switchDemoUser } = useAuth();
   const [copiedIp, setCopiedIp] = useState(false);
   const serverIp = import.meta.env.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net';
+  const [serverStatus, setServerStatus] = useState<MinecraftServerStatus | null>(null);
+
+  useEffect(() => {
+    checkMinecraftServerStatus(serverIp).then(setServerStatus);
+    const interval = setInterval(() => {
+      checkMinecraftServerStatus(serverIp).then(setServerStatus);
+    }, 45000); // Consulta cada 45 segundos
+    return () => clearInterval(interval);
+  }, [serverIp]);
 
   const handleCopyIp = () => {
     navigator.clipboard.writeText(serverIp);
     setCopiedIp(true);
     setTimeout(() => setCopiedIp(false), 2000);
   };
+
+  const isOnline = serverStatus ? serverStatus.online : true;
 
   return (
     <header className="h-14 bg-discord-card border-b border-discord-border/50 px-4 flex items-center justify-between flex-shrink-0 z-20">
@@ -31,10 +43,13 @@ export const Navbar: React.FC = () => {
           title="Click para copiar la IP del servidor"
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-discord-secondary/80 hover:bg-discord-secondary border border-discord-border/60 text-xs font-medium text-discord-text-normal hover:text-white transition-all group"
         >
-          <Server size={14} className="text-discord-green" />
+          <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+          <Server size={14} className={isOnline ? 'text-discord-green' : 'text-rose-400'} />
           <span className="font-mono text-white/90">{serverIp}</span>
-          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-sans font-semibold">
-            1.21.4
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-sans font-semibold ${
+            isOnline ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+          }`}>
+            {isOnline ? `${serverStatus?.playersOnline ?? 0} online` : 'Apagado'}
           </span>
           {copiedIp ? (
             <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold ml-1">
