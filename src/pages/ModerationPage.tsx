@@ -37,6 +37,7 @@ export const ModerationPage: React.FC = () => {
 
   // Modal para aprobar con coordenadas oficiales
   const [projectToApprove, setProjectToApprove] = useState<Project | null>(null);
+  const [useCustomCoords, setUseCustomCoords] = useState(false);
   const [approvalCoords, setApprovalCoords] = useState<{
     dimension: Dimension;
     x: number;
@@ -109,6 +110,7 @@ export const ModerationPage: React.FC = () => {
     if (yMatch) guessedY = parseInt(yMatch[1], 10);
     if (zMatch) guessedZ = parseInt(zMatch[1], 10);
 
+    setUseCustomCoords(false);
     setApprovalCoords({
       dimension: guessedDim,
       x: guessedX,
@@ -125,19 +127,35 @@ export const ModerationPage: React.FC = () => {
     if (!profile || !projectToApprove) return;
     try {
       setActionLoading(true);
+
+      // Si el moderador eligió editar coordenadas, se envían las coordenadas finales;
+      // si dejó la ubicación propuesta, se pasa undefined para mantener intacta la ubicación original.
+      const finalCoordsPayload = useCustomCoords
+        ? {
+            dimension: approvalCoords.dimension,
+            x: Number(approvalCoords.x),
+            y: Number(approvalCoords.y),
+            z: Number(approvalCoords.z),
+            categoria: approvalCoords.categoria,
+            publicarCoordenada: approvalCoords.publicarCoordenada,
+          }
+        : approvalCoords.publicarCoordenada
+        ? {
+            dimension: approvalCoords.dimension,
+            x: Number(approvalCoords.x),
+            y: Number(approvalCoords.y),
+            z: Number(approvalCoords.z),
+            categoria: approvalCoords.categoria,
+            publicarCoordenada: true,
+          }
+        : undefined;
+
       await projectService.review(
         projectToApprove.id,
         profile.id,
         'aprobado',
         undefined,
-        {
-          dimension: approvalCoords.dimension,
-          x: Number(approvalCoords.x),
-          y: Number(approvalCoords.y),
-          z: Number(approvalCoords.z),
-          categoria: approvalCoords.categoria,
-          publicarCoordenada: approvalCoords.publicarCoordenada,
-        }
+        finalCoordsPayload
       );
       setProjectToApprove(null);
       await loadModerationData();
@@ -442,7 +460,7 @@ export const ModerationPage: React.FC = () => {
       <Modal
         isOpen={Boolean(projectToApprove)}
         onClose={() => setProjectToApprove(null)}
-        title="Aprobar Proyecto & Asignar Coordenadas Finales"
+        title="Aprobar Proyecto Comunitario"
         subtitle={projectToApprove?.nombre}
         maxWidth="lg"
         footer={
@@ -467,106 +485,172 @@ export const ModerationPage: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2.5">
-            <Sparkles size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-            <div className="leading-relaxed">
-              <strong className="block text-emerald-200">Publicación automática:</strong>
-              Al aprobar el proyecto, se asignarán estas coordenadas oficiales y se publicará automáticamente en la sección de <strong>Coordenadas del Servidor</strong> para que todos los jugadores puedan encontrar la obra.
-            </div>
+          <div className="p-3 rounded-xl bg-discord-secondary/70 border border-discord-border/60 text-xs">
+            <span className="text-[11px] font-bold text-discord-text-muted uppercase block mb-0.5">
+              Ubicación propuesta por el creador:
+            </span>
+            <p className="font-mono text-cyan-300">{projectToApprove?.ubicacion}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">
-                Dimensión Oficial *
-              </label>
-              <select
-                value={approvalCoords.dimension}
-                onChange={(e) =>
-                  setApprovalCoords({ ...approvalCoords, dimension: e.target.value as Dimension })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white text-xs focus:outline-none focus:border-discord-blurple"
+          {/* Opciones de coordenadas: Mantener propuesta vs Establecer coordenadas reales */}
+          <div className="space-y-2 pt-1">
+            <label className="block text-xs font-bold text-discord-text-muted uppercase">
+              Coordenadas de la Obra:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setUseCustomCoords(false)}
+                className={`p-3 rounded-xl border text-left text-xs transition-all ${
+                  !useCustomCoords
+                    ? 'bg-discord-blurple/20 border-discord-blurple text-white font-bold'
+                    : 'bg-discord-secondary/60 border-discord-border/60 text-discord-text-muted hover:text-white'
+                }`}
               >
-                <option value="Overworld">Overworld</option>
-                <option value="Nether">Nether</option>
-                <option value="The End">The End</option>
-              </select>
-            </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${!useCustomCoords ? 'border-discord-blurple bg-discord-blurple' : 'border-discord-border'}`}>
+                    {!useCustomCoords && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <span>Dejar coordenadas propuestas</span>
+                </div>
+                <p className="text-[11px] text-discord-text-muted font-normal pl-5">
+                  Mantiene el texto original propuesto por el creador.
+                </p>
+              </button>
 
-            <div>
-              <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">
-                Categoría en Coordenadas *
-              </label>
-              <select
-                value={approvalCoords.categoria}
-                onChange={(e) =>
-                  setApprovalCoords({
-                    ...approvalCoords,
-                    categoria: e.target.value as CoordinateCategory,
-                  })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white text-xs focus:outline-none focus:border-discord-blurple"
+              <button
+                type="button"
+                onClick={() => setUseCustomCoords(true)}
+                className={`p-3 rounded-xl border text-left text-xs transition-all ${
+                  useCustomCoords
+                    ? 'bg-emerald-500/20 border-emerald-500 text-white font-bold'
+                    : 'bg-discord-secondary/60 border-discord-border/60 text-discord-text-muted hover:text-white'
+                }`}
               >
-                <option value="Granja">Granja</option>
-                <option value="Base">Base / Mega Construcción</option>
-                <option value="Portal">Portal / Metro</option>
-                <option value="Comercio">Comercio</option>
-                <option value="Redstone">Redstone</option>
-                <option value="Otros">Otros</option>
-              </select>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${useCustomCoords ? 'border-emerald-500 bg-emerald-500' : 'border-discord-border'}`}>
+                    {useCustomCoords && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <span>Establecer coordenadas reales</span>
+                </div>
+                <p className="text-[11px] text-discord-text-muted font-normal pl-5">
+                  El moderador fija las coordenadas finales oficiales (X, Y, Z).
+                </p>
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">X Oficial *</label>
-              <input
-                type="number"
-                required
-                value={approvalCoords.x}
-                onChange={(e) =>
-                  setApprovalCoords({ ...approvalCoords, x: Number(e.target.value) })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">Y Oficial *</label>
-              <input
-                type="number"
-                required
-                value={approvalCoords.y}
-                onChange={(e) =>
-                  setApprovalCoords({ ...approvalCoords, y: Number(e.target.value) })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">Z Oficial *</label>
-              <input
-                type="number"
-                required
-                value={approvalCoords.z}
-                onChange={(e) =>
-                  setApprovalCoords({ ...approvalCoords, z: Number(e.target.value) })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
-              />
-            </div>
-          </div>
+          {/* Formulario de coordenadas oficiales (cuando useCustomCoords es true) */}
+          {useCustomCoords && (
+            <div className="p-3.5 rounded-xl bg-discord-card border border-emerald-500/40 space-y-3 animate-in fade-in">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                Asignar Coordenadas Oficiales (Staff)
+              </span>
 
-          <div className="pt-2">
-            <label className="flex items-center gap-2 cursor-pointer text-xs text-discord-text-normal">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">
+                    Dimensión *
+                  </label>
+                  <select
+                    value={approvalCoords.dimension}
+                    onChange={(e) =>
+                      setApprovalCoords({ ...approvalCoords, dimension: e.target.value as Dimension })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white text-xs focus:outline-none focus:border-discord-blurple cursor-pointer"
+                  >
+                    <option value="Overworld">Overworld</option>
+                    <option value="Nether">Nether</option>
+                    <option value="The End">The End</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">
+                    Categoría en Coordenadas *
+                  </label>
+                  <select
+                    value={approvalCoords.categoria}
+                    onChange={(e) =>
+                      setApprovalCoords({
+                        ...approvalCoords,
+                        categoria: e.target.value as CoordinateCategory,
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white text-xs focus:outline-none focus:border-discord-blurple cursor-pointer"
+                  >
+                    <option value="Granja">Granja</option>
+                    <option value="Base">Base / Mega Construcción</option>
+                    <option value="Portal">Portal / Metro</option>
+                    <option value="Comercio">Comercio</option>
+                    <option value="Redstone">Redstone</option>
+                    <option value="Otros">Otros</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">X *</label>
+                  <input
+                    type="number"
+                    required
+                    value={approvalCoords.x}
+                    onChange={(e) =>
+                      setApprovalCoords({ ...approvalCoords, x: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">Y *</label>
+                  <input
+                    type="number"
+                    required
+                    value={approvalCoords.y}
+                    onChange={(e) =>
+                      setApprovalCoords({ ...approvalCoords, y: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-discord-text-muted uppercase mb-1">Z *</label>
+                  <input
+                    type="number"
+                    required
+                    value={approvalCoords.z}
+                    onChange={(e) =>
+                      setApprovalCoords({ ...approvalCoords, z: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-discord-input border border-discord-border/80 text-white font-mono text-xs focus:outline-none focus:border-discord-blurple"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Checkbox: Publicar o no automáticamente */}
+          <div className="pt-2 p-3 rounded-xl bg-discord-secondary/50 border border-discord-border/60">
+            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-discord-text-normal select-none">
               <input
                 type="checkbox"
                 checked={approvalCoords.publicarCoordenada}
                 onChange={(e) =>
                   setApprovalCoords({ ...approvalCoords, publicarCoordenada: e.target.checked })
                 }
-                className="rounded text-discord-blurple focus:ring-0"
+                className="w-4 h-4 rounded text-discord-blurple focus:ring-0 cursor-pointer"
               />
-              <span>Publicar automáticamente en la lista de Coordenadas de la comunidad</span>
+              <div>
+                <span className="font-bold text-white block">
+                  Publicar automáticamente en la lista de Coordenadas del servidor
+                </span>
+                <span className="text-[11px] text-discord-text-muted block">
+                  {approvalCoords.publicarCoordenada
+                    ? 'Se creará una entrada pública en Coordenadas para que la comunidad visite el lugar.'
+                    : 'No se publicará en Coordenadas públicas, solo quedará aprobado en la lista de proyectos.'}
+                </span>
+              </div>
             </label>
           </div>
         </div>
