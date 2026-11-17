@@ -1,5 +1,6 @@
 import { Coordinate, CoordinateCategory, CoordinateReport, Dimension, ReportStatus } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { discordWebhookService } from './discordWebhookService';
 import {
   getStoredCoordinates,
   saveStoredCoordinates,
@@ -58,6 +59,19 @@ export const coordinateService = {
         console.error('Error creating coordinate:', error);
         throw error;
       }
+
+      // Notificar a Discord
+      discordWebhookService.notifyNewCoordinate({
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        categoria: data.categoria,
+        dimension: data.dimension,
+        x: data.x,
+        y: data.y,
+        z: data.z,
+        autor: data.usuario?.username || 'Un jugador',
+      });
+
       return data;
     }
 
@@ -83,6 +97,19 @@ export const coordinateService = {
 
     const updated = [newCoord, ...coords];
     saveStoredCoordinates(updated);
+
+    // Notificar a Discord (Modo local/demo)
+    discordWebhookService.notifyNewCoordinate({
+      nombre: newCoord.nombre,
+      descripcion: newCoord.descripcion,
+      categoria: newCoord.categoria,
+      dimension: newCoord.dimension,
+      x: newCoord.x,
+      y: newCoord.y,
+      z: newCoord.z,
+      autor: userProfile?.username || 'Un jugador',
+    });
+
     return newCoord;
   },
 
@@ -143,7 +170,7 @@ export const coordinateService = {
         .select(`
           *,
           coordenada:coordenadas(*),
-          reportador:profiles(*)
+          reportador:profiles!reportado_por(*)
         `)
         .single();
 
@@ -186,8 +213,8 @@ export const coordinateService = {
         .select(`
           *,
           coordenada:coordenadas(*),
-          reportador:profiles(*),
-          revisor:profiles(*)
+          reportador:profiles!reportado_por(*),
+          revisor:profiles!revisado_por(*)
         `)
         .order('fecha_creacion', { ascending: false });
 
@@ -196,6 +223,21 @@ export const coordinateService = {
     }
 
     return getStoredReports();
+  },
+
+  // Cuenta los reportes pendientes sin descargar datos (ligero, para badges)
+  async countPendingReports(): Promise<number> {
+    if (isSupabaseConfigured) {
+      const { count, error } = await supabase
+        .from('reportes_coordenadas')
+        .select('*', { count: 'exact', head: true })
+        .eq('estado', 'pendiente');
+
+      if (error) throw error;
+      return count ?? 0;
+    }
+
+    return getStoredReports().filter((r) => r.estado === 'pendiente').length;
   },
 
   async resolveReport(

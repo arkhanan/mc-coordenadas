@@ -23,16 +23,22 @@ export const Sidebar: React.FC = () => {
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [reportCount, setReportCount] = useState<number>(0);
 
-  // Poll or refresh badges for moderation
+  // Poll or refresh badges for moderation (solo si es moderador/admin)
   useEffect(() => {
+    if (!isMod) {
+      setPendingCount(0);
+      setReportCount(0);
+      return;
+    }
+
     const fetchBadges = async () => {
       try {
-        const [projects, reports] = await Promise.all([
-          projectService.getAll(),
-          coordinateService.getReports(),
+        const [proposedProjects, pendingReports] = await Promise.all([
+          projectService.countProposed(),
+          coordinateService.countPendingReports(),
         ]);
-        setPendingCount(projects.filter((p) => p.estado === 'propuesto').length);
-        setReportCount(reports.filter((r) => r.estado === 'pendiente').length);
+        setPendingCount(proposedProjects);
+        setReportCount(pendingReports);
       } catch (err) {
         console.error('Error fetching sidebar badges:', err);
       }
@@ -40,7 +46,7 @@ export const Sidebar: React.FC = () => {
     fetchBadges();
     const interval = setInterval(fetchBadges, 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isMod]);
 
   const totalModAlerts = pendingCount + reportCount;
 
@@ -80,10 +86,9 @@ export const Sidebar: React.FC = () => {
               to="/"
               end
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-discord-card text-white'
-                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-discord-card text-white'
+                  : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                 }`
               }
             >
@@ -94,10 +99,9 @@ export const Sidebar: React.FC = () => {
             <NavLink
               to="/coordenadas"
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-discord-card text-white'
-                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-discord-card text-white'
+                  : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                 }`
               }
             >
@@ -108,10 +112,9 @@ export const Sidebar: React.FC = () => {
             <NavLink
               to="/coordenadas/crear"
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-discord-card text-white'
-                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-discord-card text-white'
+                  : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                 }`
               }
             >
@@ -131,10 +134,9 @@ export const Sidebar: React.FC = () => {
             <NavLink
               to="/proyectos"
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-discord-card text-white'
-                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-discord-card text-white'
+                  : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                 }`
               }
             >
@@ -145,10 +147,9 @@ export const Sidebar: React.FC = () => {
             <NavLink
               to="/proyectos/crear"
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-discord-card text-white'
-                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-discord-card text-white'
+                  : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                 }`
               }
             >
@@ -169,10 +170,9 @@ export const Sidebar: React.FC = () => {
               <NavLink
                 to="/moderacion"
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-discord-card text-white'
-                      : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                  `flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                    ? 'bg-discord-card text-white'
+                    : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                   }`
                 }
               >
@@ -191,10 +191,9 @@ export const Sidebar: React.FC = () => {
                 <NavLink
                   to="/administracion"
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-discord-card text-white'
-                        : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
+                    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                      ? 'bg-discord-card text-white'
+                      : 'text-discord-text-muted hover:bg-discord-hover hover:text-discord-text-normal'
                     }`
                   }
                 >

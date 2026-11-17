@@ -29,6 +29,21 @@ export const projectService = {
     return getStoredProjects();
   },
 
+  // Cuenta los proyectos propuestos sin descargar datos (ligero, para badges)
+  async countProposed(): Promise<number> {
+    if (isSupabaseConfigured) {
+      const { count, error } = await supabase
+        .from('proyectos')
+        .select('*', { count: 'exact', head: true })
+        .eq('estado', 'propuesto');
+
+      if (error) throw error;
+      return count ?? 0;
+    }
+
+    return getStoredProjects().filter((p) => p.estado === 'propuesto').length;
+  },
+
   async create(project: {
     nombre: string;
     descripcion: string;
