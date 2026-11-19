@@ -4,31 +4,34 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host "   MineCoords Client Mod - Compilador Automatico  " -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 
-# 1. Verificar si Gradle ya está en el sistema
-$gradleCmd = Get-Command "gradle" -ErrorAction SilentlyContinue
+# Loom 1.17 requiere Gradle 9.6.0
+$targetGradleVersion = "9.6.0"
+$binDir = Join-Path $PSScriptRoot ".gradle-bin"
+$localGradle = Join-Path $binDir "gradle-$targetGradleVersion\bin\gradle.bat"
 
-if (-not $gradleCmd) {
-    $localGradle = Join-Path $PSScriptRoot ".gradle-bin\gradle-8.10\bin\gradle.bat"
-    if (-not (Test-Path $localGradle)) {
-        Write-Host "Gradle no esta instalado en el sistema." -ForegroundColor Yellow
-        Write-Host "Descargando Gradle portable oficial (Gradle 8.10)..." -ForegroundColor Yellow
-        
-        $zipPath = Join-Path $PSScriptRoot "gradle-temp.zip"
-        $binDir = Join-Path $PSScriptRoot ".gradle-bin"
-        
-        if (-not (Test-Path $binDir)) { New-Item -ItemType Directory -Path $binDir | Out-Null }
-        
-        Invoke-WebRequest -Uri "https://services.gradle.org/distributions/gradle-8.10-bin.zip" -OutFile $zipPath
-        Write-Host "Extrayendo Gradle..." -ForegroundColor Cyan
-        Expand-Archive -Path $zipPath -DestinationPath $binDir -Force
-        Remove-Item $zipPath -Force
+if (-not (Test-Path $localGradle)) {
+    Write-Host "Preparando Gradle $targetGradleVersion para Loom 1.17..." -ForegroundColor Yellow
+    
+    # Limpiar versiones viejas si existieran
+    if (Test-Path $binDir) {
+        Remove-Item -Path $binDir -Recurse -Force -ErrorAction SilentlyContinue
     }
-    $gradleExec = $localGradle
-} else {
-    $gradleExec = "gradle"
+    New-Item -ItemType Directory -Path $binDir | Out-Null
+    
+    $zipPath = Join-Path $PSScriptRoot "gradle-temp.zip"
+    $downloadUrl = "https://services.gradle.org/distributions/gradle-$targetGradleVersion-bin.zip"
+    
+    Write-Host "Descargando Gradle $targetGradleVersion oficial..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath
+    
+    Write-Host "Extrayendo Gradle $targetGradleVersion..." -ForegroundColor Cyan
+    Expand-Archive -Path $zipPath -DestinationPath $binDir -Force
+    Remove-Item $zipPath -Force
 }
 
-Write-Host "`nIniciando compilacion del mod Fabric..." -ForegroundColor Green
+$gradleExec = $localGradle
+
+Write-Host "`nIniciando compilacion del mod Fabric con Gradle $targetGradleVersion..." -ForegroundColor Green
 Set-Location $PSScriptRoot
 
 & $gradleExec build --no-daemon
