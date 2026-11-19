@@ -43,6 +43,8 @@ export interface UserProfile {
   created_at: string;
   updated_at?: string;
   minecraft_username?: string | null;
+  is_banned?: boolean;
+  ban_reason?: string | null;
 }
 
 export interface Coordinate {

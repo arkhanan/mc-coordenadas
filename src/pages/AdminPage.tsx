@@ -17,6 +17,10 @@ import {
   ShieldAlert,
   Save,
   Globe,
+  Ban,
+  Trash2,
+  UserCheck,
+  UserX,
 } from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
@@ -107,6 +111,70 @@ export const AdminPage: React.FC = () => {
     } catch (err) {
       console.error('Error updating user role:', err);
       alert('Error al actualizar rol de usuario.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleToggleBan = async (user: UserProfile) => {
+    const isCurrentlyBanned = Boolean(user.is_banned);
+    let reason = '';
+
+    if (!isCurrentlyBanned) {
+      const input = prompt(
+        `¿Deseas bloquear permanentemente a ${user.username}?\nIngresa el motivo del bloqueo (opcional):`,
+        'Infracción de normas del servidor'
+      );
+      if (input === null) return; // Cancelado
+      reason = input.trim() || 'Bloqueado por el administrador';
+    } else {
+      if (!confirm(`¿Deseas desbloquear a ${user.username} para que pueda volver a entrar?`)) {
+        return;
+      }
+    }
+
+    try {
+      setUpdatingId(user.id);
+      await adminService.toggleBanUser(user.id, !isCurrentlyBanned, reason);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id
+            ? { ...u, is_banned: !isCurrentlyBanned, ban_reason: !isCurrentlyBanned ? reason : null }
+            : u
+        )
+      );
+      setSuccessNotice(
+        !isCurrentlyBanned
+          ? `Usuario ${user.username} ha sido BLOQUEADO/BANEADO.`
+          : `Usuario ${user.username} ha sido DESBLOQUEADO con éxito.`
+      );
+      setTimeout(() => setSuccessNotice(null), 4000);
+    } catch (err) {
+      console.error('Error modificando estado de baneo:', err);
+      alert('Error al cambiar el estado de bloqueo del usuario.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteUser = async (user: UserProfile) => {
+    if (
+      !confirm(
+        `⚠️ ¿ESTÁS SEGURO DE ELIMINAR A "${user.username}"?\n\nEsta acción borrará permanentemente su perfil de la base de datos y revocará todas sus vinculaciones.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setUpdatingId(user.id);
+      await adminService.deleteUser(user.id);
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      setSuccessNotice(`Usuario "${user.username}" eliminado permanentemente.`);
+      setTimeout(() => setSuccessNotice(null), 4000);
+    } catch (err) {
+      console.error('Error eliminando usuario:', err);
+      alert('Error al eliminar usuario de la base de datos.');
     } finally {
       setUpdatingId(null);
     }
@@ -366,9 +434,9 @@ export const AdminPage: React.FC = () => {
                 <th className="pb-3 px-3">Usuario Discord</th>
                 <th className="pb-3 px-3">Minecraft Vinculado</th>
                 <th className="pb-3 px-3">Discord ID</th>
-                <th className="pb-3 px-3">Fecha Registro</th>
-                <th className="pb-3 px-3">Rol Actual</th>
-                <th className="pb-3 px-3 text-right">Asignar Rol</th>
+                <th className="pb-3 px-3">Estado</th>
+                <th className="pb-3 px-3">Rol</th>
+                <th className="pb-3 px-3 text-right">Acciones de Moderación</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-discord-border/30">
@@ -412,9 +480,19 @@ export const AdminPage: React.FC = () => {
                     {user.discord_id || 'Sin vincular'}
                   </td>
 
-                  {/* Registered date */}
-                  <td className="py-3 px-3 text-discord-text-muted">
-                    {new Date(user.created_at).toLocaleDateString()}
+                  {/* Estado (Baneado / Activo) */}
+                  <td className="py-3 px-3">
+                    {user.is_banned ? (
+                      <span className="inline-flex items-center gap-1 font-bold text-[10px] uppercase tracking-wider text-rose-400 bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 rounded-full">
+                        <Ban size={10} />
+                        Baneado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        Activo
+                      </span>
+                    )}
                   </td>
 
                   {/* Current Role badge */}
@@ -422,20 +500,54 @@ export const AdminPage: React.FC = () => {
                     <RoleBadge role={user.role} />
                   </td>
 
-                  {/* Role select action */}
+                  {/* Actions: Role select, Ban/Unban, Delete */}
                   <td className="py-3 px-3 text-right">
-                    <select
-                      value={user.role}
-                      disabled={updatingId === user.id}
-                      onChange={(e) =>
-                        handleRoleChange(user.id, e.target.value as UserRole, user.username)
-                      }
-                      className="bg-discord-secondary hover:bg-discord-hover text-white text-xs rounded-lg px-2.5 py-1.5 border border-discord-border/80 outline-none focus:border-discord-blurple cursor-pointer disabled:opacity-50"
-                    >
-                      <option value="usuario">Jugador (Usuario)</option>
-                      <option value="moderador">Moderador</option>
-                      <option value="administrador">Administrador</option>
-                    </select>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Role Selector */}
+                      <select
+                        value={user.role}
+                        disabled={updatingId === user.id || user.id === profile?.id}
+                        onChange={(e) =>
+                          handleRoleChange(user.id, e.target.value as UserRole, user.username)
+                        }
+                        className="bg-discord-secondary hover:bg-discord-hover text-white text-xs rounded-lg px-2 py-1 border border-discord-border/80 outline-none focus:border-discord-blurple cursor-pointer disabled:opacity-50"
+                      >
+                        <option value="usuario">Jugador</option>
+                        <option value="moderador">Moderador</option>
+                        <option value="administrador">Admin</option>
+                      </select>
+
+                      {/* Botón Bloquear / Desbloquear (No a uno mismo) */}
+                      {user.id !== profile?.id && (
+                        <>
+                          <button
+                            onClick={() => handleToggleBan(user)}
+                            disabled={updatingId === user.id}
+                            title={user.is_banned ? 'Desbloquear acceso a este usuario' : 'Bloquear/Banear usuario permanentemente'}
+                            className={`p-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1 ${
+                              user.is_banned
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
+                                : 'bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-500/20'
+                            }`}
+                          >
+                            {user.is_banned ? <UserCheck size={14} /> : <UserX size={14} />}
+                            <span className="hidden xl:inline text-[11px]">
+                              {user.is_banned ? 'Desbloquear' : 'Bloquear'}
+                            </span>
+                          </button>
+
+                          {/* Botón Eliminar Usuario */}
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={updatingId === user.id}
+                            title="Eliminar usuario permanentemente de la plataforma"
+                            className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-400 hover:text-rose-200 transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

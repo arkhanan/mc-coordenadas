@@ -5,6 +5,7 @@ import { ServerConfigProvider, useServerConfig } from './context/ServerConfigCon
 import { Layout } from './components/layout/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { BannedPage } from './pages/BannedPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CoordinatesPage } from './pages/CoordinatesPage';
 import { CreateCoordinatePage } from './pages/CreateCoordinatePage';
@@ -14,7 +15,7 @@ import { ModerationPage } from './pages/ModerationPage';
 import { AdminPage } from './pages/AdminPage';
 
 const AppRoutes: React.FC = () => {
-  const { isAuthenticated, isLoading, isMod } = useAuth();
+  const { profile, isAuthenticated, isLoading, isMod } = useAuth();
   const { config, isLoading: isConfigLoading } = useServerConfig();
 
   if (isLoading || isConfigLoading) {
@@ -30,6 +31,11 @@ const AppRoutes: React.FC = () => {
 
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  // Si el usuario está baneado/bloqueado por el Administrador
+  if (profile?.is_banned) {
+    return <BannedPage />;
   }
 
   // Si está activo el modo mantenimiento (bloqueo de acceso) y NO es Staff (Admin o Mod)

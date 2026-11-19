@@ -51,9 +51,8 @@ export const Navbar: React.FC = () => {
           <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
           <Server size={14} className={isOnline ? 'text-discord-green' : 'text-rose-400'} />
           <span className="font-mono text-white/90">{serverIp}</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-sans font-semibold ${
-            isOnline ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-          }`}>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-sans font-semibold ${isOnline ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+            }`}>
             {isOnline ? `${serverStatus?.playersOnline ?? 0} online` : 'Apagado'}
           </span>
           {copiedIp ? (

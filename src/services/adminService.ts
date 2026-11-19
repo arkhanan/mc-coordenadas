@@ -49,6 +49,50 @@ export const adminService = {
     return profiles[index];
   },
 
+  async toggleBanUser(userId: string, isBanned: boolean, reason?: string): Promise<UserProfile> {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          is_banned: isBanned,
+          ban_reason: isBanned ? (reason || 'Bloqueado por un administrador') : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    const profiles = getStoredProfiles();
+    const index = profiles.findIndex((p) => p.id === userId);
+    if (index === -1) throw new Error('Usuario no encontrado');
+
+    profiles[index].is_banned = isBanned;
+    profiles[index].ban_reason = isBanned ? (reason || 'Bloqueado por un administrador') : null;
+    profiles[index].updated_at = new Date().toISOString();
+    saveStoredProfiles(profiles);
+    return profiles[index];
+  },
+
+  async deleteUser(userId: string): Promise<boolean> {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+      return true;
+    }
+
+    const profiles = getStoredProfiles().filter((p) => p.id !== userId);
+    saveStoredProfiles(profiles);
+    return true;
+  },
+
   async getServerStats(): Promise<ServerStats> {
     if (isSupabaseConfigured) {
       try {
