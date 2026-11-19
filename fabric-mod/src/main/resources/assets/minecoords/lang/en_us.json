@@ -1,0 +1,14 @@
+{
+  "category.minecoords.general": "MineCoords",
+  "key.minecoords.open_gui": "Share Coordinate on MineCoords",
+  "gui.minecoords.title": "Publish Coordinate to MineCoords",
+  "gui.minecoords.name_field": "Place Name (e.g. Iron Farm)",
+  "gui.minecoords.category": "Category:",
+  "gui.minecoords.dimension": "Dimension:",
+  "gui.minecoords.coords": "Coordinates:",
+  "gui.minecoords.submit": "Publish to Web",
+  "gui.minecoords.cancel": "Cancel",
+  "gui.minecoords.sending": "Sending to Supabase...",
+  "gui.minecoords.success": "Coordinate published successfully!",
+  "gui.minecoords.error": "Error connecting to Supabase. Check logs."
+}

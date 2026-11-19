@@ -1,0 +1,14 @@
+{
+  "category.minecoords.general": "MineCoords",
+  "key.minecoords.open_gui": "Compartir Coordenada en MineCoords",
+  "gui.minecoords.title": "Publicar Coordenada en MineCoords",
+  "gui.minecoords.name_field": "Nombre del lugar (Ej: Granja de Hierro)",
+  "gui.minecoords.category": "Categoría:",
+  "gui.minecoords.dimension": "Dimensión:",
+  "gui.minecoords.coords": "Coordenadas:",
+  "gui.minecoords.submit": "Publicar en la Web",
+  "gui.minecoords.cancel": "Cancelar",
+  "gui.minecoords.sending": "Enviando a Supabase...",
+  "gui.minecoords.success": "¡Coordenada publicada con éxito!",
+  "gui.minecoords.error": "Error al conectar con Supabase. Revisa los logs."
+}

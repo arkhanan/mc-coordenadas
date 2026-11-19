@@ -1,0 +1,5 @@
+MCCoordenadas — enlace de instalación para servidor
+
+https://discord.com/oauth2/authorize?client_id=1572238890851373208&scope=applications.commands&integration_type=0
+
+Importante: después de instalar la aplicación en un servidor nuevo, quien mantiene la aplicación debe registrar allí el comando /coordenadas. Actualmente está registrado en el servidor de prueba.

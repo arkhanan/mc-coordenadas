@@ -1,0 +1,9 @@
+Hola. Estoy probando MCCoordenadas, una aplicación de Discord para consultar, agregar y archivar coordenadas de Minecraft con comandos slash.
+
+¿Te interesaría instalarla en el servidor para probarla? Solo solicita el scope de comandos de aplicación; no pide permisos de administrador ni leer mensajes. Para que los comandos aparezcan en tu servidor, después de instalarla yo registro el comando para ese servidor.
+
+Enlace de instalación:
+https://discord.com/oauth2/authorize?client_id=1572238890851373208&scope=applications.commands&integration_type=0
+
+Guía para revisar la instalación:
+Guia-Discord-MineCoords.pdf

@@ -42,6 +42,7 @@ export interface UserProfile {
   role: UserRole;
   created_at: string;
   updated_at?: string;
+  minecraft_username?: string | null;
 }
 
 export interface Coordinate {

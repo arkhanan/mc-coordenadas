@@ -8,13 +8,16 @@ import {
   Check,
   Database,
   Users,
+  Gamepad2,
 } from 'lucide-react';
 import { INITIAL_PROFILES } from '../../lib/mockData';
 import { checkMinecraftServerStatus, MinecraftServerStatus } from '../../services/minecraftServerService';
+import { LinkMinecraftModal } from '../common/LinkMinecraftModal';
 
 export const Navbar: React.FC = () => {
   const { profile, role, signOut, isSupabaseConnected, switchDemoUser } = useAuth();
   const [copiedIp, setCopiedIp] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const serverIp = import.meta.env.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net';
   const [serverStatus, setServerStatus] = useState<MinecraftServerStatus | null>(null);
 
@@ -99,6 +102,18 @@ export const Navbar: React.FC = () => {
           </div>
         )}
 
+        {/* Link Minecraft Account Button */}
+        <button
+          onClick={() => setIsLinkModalOpen(true)}
+          title="Vincular tu cuenta de Minecraft con Discord"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-discord-blurple/15 hover:bg-discord-blurple/25 border border-discord-blurple/30 text-xs font-semibold text-discord-blurple transition-all group"
+        >
+          <Gamepad2 size={14} className="group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">
+            {profile?.minecraft_username ? `🎮 ${profile.minecraft_username}` : 'Vincular MC'}
+          </span>
+        </button>
+
         {/* User Profile */}
         <div className="flex items-center gap-2.5 pl-2">
           <div className="relative">
@@ -135,6 +150,11 @@ export const Navbar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <LinkMinecraftModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+      />
     </header>
   );
 };

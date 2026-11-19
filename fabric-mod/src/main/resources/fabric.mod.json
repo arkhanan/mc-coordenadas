@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "minecoords",
+  "version": "${version}",
+  "name": "MineCoords Client",
+  "description": "Mod de cliente para sincronizar coordenadas y proyectos en tiempo real con Supabase y MineCoords.",
+  "authors": [
+    "Comunidad Minecraft"
+  ],
+  "contact": {
+    "homepage": "https://arkhanan.github.io/mc-coordenadas/"
+  },
+  "license": "MIT",
+  "icon": "assets/minecoords/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.minecoords.client.MineCoordsClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=1.21 <=26.3",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

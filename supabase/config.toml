@@ -1,0 +1,5 @@
+[functions.discord-coordinates]
+verify_jwt = false
+
+[functions.discord-bot]
+verify_jwt = false
