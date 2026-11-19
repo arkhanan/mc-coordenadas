@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version '1.20.0-alpha.31'
     id 'maven-publish'
 }
 
@@ -19,11 +19,9 @@ repositories {
 }
 
 dependencies {
-    // Minecraft 26.3 (Version sin ofuscar)
+    // Minecraft 26.3 (Directo sin ofuscar)
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-    // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 

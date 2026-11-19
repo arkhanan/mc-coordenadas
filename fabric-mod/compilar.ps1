@@ -7,8 +7,7 @@ Write-Host "===================================================" -ForegroundColo
 $binDir = Join-Path $PSScriptRoot ".gradle-bin"
 if (-not (Test-Path $binDir)) { New-Item -ItemType Directory -Path $binDir | Out-Null }
 
-# 1. Preparar JDK 25 (Exigido por Minecraft 26.3 y Loom 1.17)
-$jdkDir = Join-Path $binDir "jdk-25"
+# 1. Preparar JDK 25 (Exigido por Minecraft 26.3 y Loom 1.20)
 $java25Exe = Get-ChildItem -Path $binDir -Filter "java.exe" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*jdk*25*" } | Select-Object -First 1
 
 if (-not $java25Exe) {
@@ -35,16 +34,17 @@ if ($java25Exe) {
     Write-Host "Usando Java 25: $jdkHome" -ForegroundColor Green
 }
 
-# 2. Preparar Gradle 9.6.0
-$targetGradleVersion = "9.6.0"
+# 2. Preparar Gradle 9.9.0 (Exigido por Loom 1.20)
+$targetGradleVersion = "9.9.0"
 $localGradle = Join-Path $binDir "gradle-$targetGradleVersion\bin\gradle.bat"
 
 if (-not (Test-Path $localGradle)) {
-    Write-Host "Descargando Gradle $targetGradleVersion..." -ForegroundColor Yellow
+    Write-Host "Descargando Gradle $targetGradleVersion para Loom 1.20..." -ForegroundColor Yellow
     $zipPath = Join-Path $PSScriptRoot "gradle-temp.zip"
     $downloadUrl = "https://services.gradle.org/distributions/gradle-$targetGradleVersion-bin.zip"
     
     Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath
+    Write-Host "Extrayendo Gradle $targetGradleVersion..." -ForegroundColor Cyan
     Expand-Archive -Path $zipPath -DestinationPath $binDir -Force
     Remove-Item $zipPath -Force
 }
