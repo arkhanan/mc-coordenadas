@@ -8,6 +8,7 @@ import { Coordinate, Project, ServerStats } from '../types';
 import { DimensionBadge, StatusBadge } from '../components/common/Badge';
 import { CoordinateCopyButton } from '../components/common/CoordinateCopyButton';
 import { checkMinecraftServerStatus, MinecraftServerStatus } from '../services/minecraftServerService';
+import { useServerConfig } from '../context/ServerConfigContext';
 import {
   MapPin,
   FolderGit2,
@@ -22,12 +23,13 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { profile, isMod } = useAuth();
+  const { config } = useServerConfig();
   const [stats, setStats] = useState<ServerStats | null>(null);
   const [recentCoords, setRecentCoords] = useState<Coordinate[]>([]);
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [mcStatus, setMcStatus] = useState<MinecraftServerStatus | null>(null);
-  const serverIp = import.meta.env.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net';
+  const serverIp = config.server_ip || 'play.minecraft-comunidad.net';
 
   useEffect(() => {
     checkMinecraftServerStatus(serverIp).then(setMcStatus);
@@ -63,7 +65,7 @@ export const DashboardPage: React.FC = () => {
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-discord-blurple/20 border border-discord-blurple/30 text-discord-blurple text-xs font-bold mb-3">
               <Compass size={14} />
-              <span>Servidor Comunitario Minecraft 1.21</span>
+              <span>{config.server_name} ({config.server_version})</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               ¡Bienvenido, {profile?.username || 'Explorador'}!

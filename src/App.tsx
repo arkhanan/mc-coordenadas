@@ -1,8 +1,10 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ServerConfigProvider, useServerConfig } from './context/ServerConfigContext';
 import { Layout } from './components/layout/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { MaintenancePage } from './pages/MaintenancePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CoordinatesPage } from './pages/CoordinatesPage';
 import { CreateCoordinatePage } from './pages/CreateCoordinatePage';
@@ -12,9 +14,10 @@ import { ModerationPage } from './pages/ModerationPage';
 import { AdminPage } from './pages/AdminPage';
 
 const AppRoutes: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isMod } = useAuth();
+  const { config, isLoading: isConfigLoading } = useServerConfig();
 
-  if (isLoading) {
+  if (isLoading || isConfigLoading) {
     return (
       <div className="h-screen w-screen bg-discord-bg flex flex-col items-center justify-center">
         <div className="w-10 h-10 border-4 border-discord-blurple border-t-transparent rounded-full animate-spin mb-4" />
@@ -27,6 +30,11 @@ const AppRoutes: React.FC = () => {
 
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  // Si está activo el modo mantenimiento (bloqueo de acceso) y NO es Staff (Admin o Mod)
+  if (config.maintenance_mode && !isMod) {
+    return <MaintenancePage />;
   }
 
   return (
@@ -48,9 +56,11 @@ const AppRoutes: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
+      <ServerConfigProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </ServerConfigProvider>
     </AuthProvider>
   );
 };

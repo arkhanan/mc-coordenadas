@@ -13,12 +13,14 @@ import {
 import { INITIAL_PROFILES } from '../../lib/mockData';
 import { checkMinecraftServerStatus, MinecraftServerStatus } from '../../services/minecraftServerService';
 import { LinkMinecraftModal } from '../common/LinkMinecraftModal';
+import { useServerConfig } from '../../context/ServerConfigContext';
 
 export const Navbar: React.FC = () => {
   const { profile, role, signOut, isSupabaseConnected, switchDemoUser } = useAuth();
+  const { config } = useServerConfig();
   const [copiedIp, setCopiedIp] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const serverIp = import.meta.env.VITE_MC_SERVER_IP || 'play.minecraft-comunidad.net';
+  const serverIp = config.server_ip || 'play.minecraft-comunidad.net';
   const [serverStatus, setServerStatus] = useState<MinecraftServerStatus | null>(null);
 
   useEffect(() => {
@@ -80,6 +82,16 @@ export const Navbar: React.FC = () => {
             {isSupabaseConnected ? 'Supabase Live' : 'Modo Demo Activo'}
           </span>
         </div>
+
+        {/* Maintenance active indicator for Staff */}
+        {config.maintenance_mode && (
+          <div
+            title="El acceso a usuarios normales está bloqueado. Solo el Staff puede entrar."
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 border border-amber-500/40 text-amber-300 animate-pulse"
+          >
+            <span>🔒 Modo Mantenimiento</span>
+          </div>
+        )}
       </div>
 
       {/* Right: User card, Role Switcher for Demo testing & Sign Out */}
