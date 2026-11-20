@@ -261,7 +261,7 @@ export const DashboardPage: React.FC = () => {
                       variant="simple"
                     />
                     <span className="text-[11px] text-discord-text-muted">
-                      Por: <strong className="text-discord-text-normal">{coord.usuario?.username || 'Comunidad'}</strong>
+                      Por: <strong className="text-discord-text-normal">{coord.discord_username || coord.usuario?.username || 'Comunidad'}</strong>
                     </span>
                   </div>
                 </div>

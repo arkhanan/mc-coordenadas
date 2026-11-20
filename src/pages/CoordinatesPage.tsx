@@ -91,7 +91,7 @@ export const CoordinatesPage: React.FC = () => {
     const matchesSearch =
       coord.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (coord.descripcion && coord.descripcion.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (coord.usuario?.username && coord.usuario.username.toLowerCase().includes(searchTerm.toLowerCase()));
+      ((coord.discord_username || coord.usuario?.username) && (coord.discord_username || coord.usuario?.username)!.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesDimension =
       selectedDimension === 'Todas' || coord.dimension === selectedDimension;
@@ -338,14 +338,14 @@ export const CoordinatesPage: React.FC = () => {
                     <img
                       src={
                         coord.usuario?.avatar_url ||
-                        `https://api.dicebear.com/7.x/bottts/svg?seed=${coord.usuario?.username || 'user'}`
+                        `https://api.dicebear.com/7.x/bottts/svg?seed=${coord.discord_username || coord.usuario?.username || 'user'}`
                       }
-                      alt={coord.usuario?.username}
+                      alt={coord.discord_username || coord.usuario?.username || 'Jugador'}
                       className="w-6 h-6 rounded-full border border-discord-border/70 object-cover flex-shrink-0"
                     />
                     <div className="truncate">
                       <p className="font-bold text-discord-text-normal truncate leading-none">
-                        {coord.usuario?.username || 'Anónimo'}
+                        {coord.discord_username || coord.usuario?.username || 'Anónimo'}
                       </p>
                       <p className="text-[10px] text-discord-text-muted mt-0.5">
                         {new Date(coord.fecha).toLocaleDateString()}
