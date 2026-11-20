@@ -56,12 +56,14 @@ export interface Coordinate {
   x: number;
   y: number;
   z: number;
-  usuario_id: string;
+  usuario_id: string | null;
+  discord_user_id?: string | null;
+  discord_username?: string | null;
   estado: CoordinateStatus;
   fecha: string;
   updated_at?: string;
   // Joins
-  usuario?: UserProfile;
+  usuario?: UserProfile | null;
 }
 
 export interface CoordinateReport {
